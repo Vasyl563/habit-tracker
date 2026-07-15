@@ -1,0 +1,25 @@
+{
+  "name": "habit-tracker",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @habit-tracker/db db:generate",
+    "db:migrate": "pnpm --filter @habit-tracker/db db:migrate",
+    "db:seed": "pnpm --filter @habit-tracker/db db:seed",
+    "db:studio": "pnpm --filter @habit-tracker/db db:studio",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "turbo": "^2.10.2",
+    "typescript": "^6.0.3"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": { "cache": false, "persistent": true },
+    "typecheck": { "dependsOn": ["^typecheck"] },
+    "db:generate": { "cache": false },
+    "db:migrate": { "cache": false },
+    "db:seed": { "cache": false }
+  }
+}
