@@ -1,3 +1,11 @@
+# Local infrastructure for the habit-tracker monorepo.
+#
+#   pnpm db:up            -> only the infra (postgres, redis, minio, mailpit)
+#   docker compose --profile app up --build   -> infra + api + worker images (L13)
+#
+# Host ports are shifted (5433, 6380, ...) so they never clash with services
+# you may already run locally.
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,15 +16,130 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: habit_tracker
     ports:
-      # host 5433 -> container 5432 (5433 avoids clashing with a local Postgres)
+      # host 5433 -> container 5432
       - "5433:5432"
     volumes:
       - habit_pg_data:/var/lib/postgresql/data
+      # creates the habit_tracker_test database on first boot (integration tests)
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d habit_tracker"]
       interval: 3s
       timeout: 3s
       retries: 10
 
+  redis:
+    # Cache (L8), rate limiting (L9), BullMQ + Pub/Sub for SSE (L11)
+    image: redis:7-alpine
+    container_name: habit_tracker_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6380:6379"
+    volumes:
+      - habit_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    # S3-compatible object storage for file uploads (L12)
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: habit_tracker_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # web console
+    volumes:
+      - habit_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio-init:
+    # One-shot job: creates the bucket the app expects, then exits.
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    container_name: habit_tracker_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/habit-tracker &&
+        echo 'bucket ready'
+      "
+
+  mailpit:
+    # Local SMTP sink with a web inbox — emails from the worker land here (L11)
+    image: axllent/mailpit:v1.24
+    container_name: habit_tracker_mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"   # web UI
+      - "1025:1025"   # SMTP
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025/livez"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── application images (L13) ─────────────────────────────────────────────
+  migrate:
+    # Runs drizzle migrations and exits. api waits for it to *complete
+    # successfully* — new code never starts on an old schema.
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: habit_tracker_migrate
+    env_file: [.env.docker]
+    command: ["pnpm", "--filter", "@habit-tracker/api", "migrate"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  api:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: habit_tracker_api
+    env_file: [.env.docker]
+    ports:
+      - "3005:3005"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3005/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: habit_tracker_worker
+    env_file: [.env.docker]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+
 volumes:
   habit_pg_data:
+  habit_redis_data:
+  habit_minio_data:

@@ -1,0 +1,35 @@
+# Migrations at deploy time (L13): a separate, human-approved job that runs
+# `drizzle migrate` against the target database BEFORE the new image goes
+# live. The migrator takes a Postgres advisory lock, so two runs can't race.
+#
+# Requires a GitHub Environment named `production` (Settings → Environments)
+# with a DATABASE_URL secret and "Required reviewers" enabled — the workflow
+# pauses until someone clicks Approve.
+name: Migrate database
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: target environment
+        type: environment
+        required: true
+        default: production
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @habit-tracker/api migrate

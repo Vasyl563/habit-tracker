@@ -1,0 +1,16 @@
+# Everything sent to the Docker daemon is "build context". Without this file
+# that would include node_modules (hundreds of MB) and secrets.
+node_modules
+**/node_modules
+**/dist
+**/coverage
+**/.turbo
+.git
+.env
+.env.*
+!.env.example
+!.env.docker.example
+*.log
+**/.DS_Store
+docs
+README.md

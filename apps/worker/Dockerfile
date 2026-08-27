@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1.7
+# apps/worker image · same recipe as apps/api, pruned for @habit-tracker/worker.
+# No port, no HEALTHCHECK on HTTP — BullMQ workers report health through logs
+# and (in production) Bull Board / metrics.
+ARG NODE_VERSION=22.21.1
+FROM node:${NODE_VERSION}-alpine AS base
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
+
+FROM base AS pruner
+WORKDIR /app
+COPY . .
+RUN pnpm dlx turbo@2.10.2 prune @habit-tracker/worker --docker
+
+FROM base AS installer
+WORKDIR /app
+COPY --from=pruner /app/out/json/ ./
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=pruner /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --prod
+COPY --from=pruner /app/out/full/ ./
+
+FROM base AS runtime
+ARG GIT_SHA=dev
+ENV NODE_ENV=production
+ENV GIT_SHA=$GIT_SHA
+WORKDIR /app
+COPY --from=installer --chown=node:node /app ./
+USER node
+CMD ["pnpm", "--filter", "@habit-tracker/worker", "start"]
