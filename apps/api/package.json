@@ -6,16 +6,35 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "migrate": "tsx src/migrate.ts"
   },
   "dependencies": {
+    "@habit-tracker/auth": "workspace:*",
     "@habit-tracker/db": "workspace:*",
+    "@habit-tracker/logger": "workspace:*",
+    "@habit-tracker/queues": "workspace:*",
+    "@habit-tracker/redis": "workspace:*",
+    "@habit-tracker/shared": "workspace:*",
+    "@habit-tracker/storage": "workspace:*",
     "@habit-tracker/types": "workspace:*",
-    "@hono/node-server": "^2.0.6",
-    "hono": "^4.12.27"
+    "@hono/node-server": "^2.1.1",
+    "@orpc/client": "^1.15.0",
+    "@orpc/openapi": "^1.15.0",
+    "@orpc/server": "^1.15.0",
+    "@orpc/zod": "^1.15.0",
+    "@sentry/node": "^10.70.0",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.13.3",
+    "stripe": "^22.5.0",
+    "tsx": "^4.22.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "tsx": "^4.22.4",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
   }
 }

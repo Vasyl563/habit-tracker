@@ -8,6 +8,41 @@
       "when": 1782897483036,
       "tag": "0000_silent_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787119851226,
+      "tag": "0001_l8_api_layer",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787119908580,
+      "tag": "0002_l10_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787119932897,
+      "tag": "0003_l11_notifications_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787119976020,
+      "tag": "0004_l12_files_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787121672938,
+      "tag": "0005_l8_keyset_ms_precision",
+      "breakpoints": true
     }
   ]
 }

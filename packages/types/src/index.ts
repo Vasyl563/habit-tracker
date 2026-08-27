@@ -1,13 +1,7 @@
-// Domain types shared across apps — the entity shapes only, no db client.
-// Everything is derived from the Drizzle schema, so the types can never drift
-// from the tables.
-export type {
-  User,
-  NewUser,
-  Habit,
-  NewHabit,
-  CheckIn,
-  NewCheckIn,
-  Follow,
-  NewFollow
-} from "@habit-tracker/db";
+// Shared between apps/api and apps/web: Zod schemas, DTO types, and the oRPC
+// contract. Deliberately *no* database imports here — DTOs are the API's
+// promise; entities are the DB's storage. Different things (L8).
+
+export type { Contract } from "./contract.js";
+export { contract } from "./contract.js";
+export * from "./schemas/index.js";

@@ -1,5 +1,5 @@
 {
-  "name": "@habit-tracker/types",
+  "name": "@habit-tracker/shared",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@orpc/contract": "^1.15.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
