@@ -1,0 +1,25 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "apps/api/Dockerfile"
+  },
+  "deploy": {
+    "preDeployCommand": ["pnpm --filter @habit-tracker/api migrate"],
+    "startCommand": "pnpm --filter @habit-tracker/api start",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  },
+  "environments": {
+    "staging": {
+      "deploy": {
+        "preDeployCommand": [
+          "pnpm --filter @habit-tracker/api migrate",
+          "pnpm --filter @habit-tracker/db db:seed"
+        ]
+      }
+    }
+  }
+}
