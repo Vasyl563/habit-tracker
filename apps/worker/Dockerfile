@@ -18,8 +18,9 @@ WORKDIR /app
 COPY --from=pruner /app/out/json/ ./
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=pruner /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --prod
+# no BuildKit cache mount: Railway's builder requires service-scoped cache ids,
+# and GitHub Actions caches whole layers anyway
+RUN pnpm install --frozen-lockfile --prod
 COPY --from=pruner /app/out/full/ ./
 
 FROM base AS runtime
