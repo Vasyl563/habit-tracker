@@ -1,0 +1,23 @@
+{
+  "name": "@habit-tracker/queues",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@habit-tracker/redis": "workspace:*",
+    "@habit-tracker/types": "workspace:*",
+    "bullmq": "^6.1.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
