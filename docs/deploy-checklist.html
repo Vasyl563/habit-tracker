@@ -1,0 +1,287 @@
+<title>Шлях у прод</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg: #fafaf6;
+    --card: #ffffff;
+    --ink: #191c15;
+    --muted: #6d7263;
+    --line: #e4e6d8;
+    --accent: #1b2450;          /* navy — текст-акцент з деку курсу */
+    --citron: #cede3a;          /* цитрон з слайдів L14 */
+    --citron-soft: #f2f6d2;
+    --done: #2e7d4f;
+    --code-bg: #14170f;
+    --code-ink: #e9edd8;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141610;
+      --card: #1c1f16;
+      --ink: #eceee0;
+      --muted: #9aa08c;
+      --line: #2c3024;
+      --accent: #d8e85a;
+      --citron: #d8e85a;
+      --citron-soft: #262a18;
+      --done: #7fd6a4;
+      --code-bg: #0e100a;
+      --code-ink: #dfe4c8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141610;
+    --card: #1c1f16;
+    --ink: #eceee0;
+    --muted: #9aa08c;
+    --line: #2c3024;
+    --accent: #d8e85a;
+    --citron: #d8e85a;
+    --citron-soft: #262a18;
+    --done: #7fd6a4;
+    --code-bg: #0e100a;
+    --code-ink: #dfe4c8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 1rem 1.25rem 4rem; }
+  header.hero { padding: 2.5rem 0 1rem; }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .75rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  h1 { font-size: 2.1rem; margin: .35rem 0 .5rem; letter-spacing: -.02em; text-wrap: balance; }
+  .hero p { color: var(--muted); max-width: 60ch; margin: 0; }
+  .progress {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--bg);
+    padding: .65rem 0 .6rem;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: .8rem;
+  }
+  .bar { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--citron); border-radius: 99px; transition: width .25s ease; }
+  .count { font-family: "IBM Plex Mono", monospace; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  section.step {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem 1.2rem;
+    margin: 1.1rem 0;
+  }
+  .step-head { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; }
+  .num {
+    font-family: "IBM Plex Mono", monospace; font-weight: 500;
+    background: var(--citron-soft); color: var(--accent);
+    border: 1px solid var(--line);
+    border-radius: 8px; padding: .1rem .5rem; font-size: .85rem;
+  }
+  h2 { font-size: 1.15rem; margin: 0; letter-spacing: -.01em; }
+  .meta { font-family: "IBM Plex Mono", monospace; font-size: .72rem; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  .step > p { color: var(--muted); font-size: .92rem; margin: .5rem 0 .25rem; max-width: 65ch; }
+
+  ul.tasks { list-style: none; padding: 0; margin: .6rem 0 0; display: flex; flex-direction: column; gap: .15rem; }
+  ul.tasks li { border-radius: 8px; }
+  ul.tasks label {
+    display: flex; gap: .6rem; align-items: flex-start;
+    padding: .42rem .5rem; border-radius: 8px; cursor: pointer;
+  }
+  ul.tasks label:hover { background: var(--citron-soft); }
+  ul.tasks input[type="checkbox"] {
+    appearance: none; flex: 0 0 auto;
+    width: 1.05rem; height: 1.05rem; margin-top: .18rem;
+    border: 1.5px solid var(--muted); border-radius: 5px;
+    display: grid; place-content: center; cursor: pointer; background: transparent;
+  }
+  ul.tasks input[type="checkbox"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ul.tasks input[type="checkbox"]::before {
+    content: ""; width: .55rem; height: .55rem; border-radius: 2px;
+    transform: scale(0); transition: transform .12s ease; background: var(--done);
+  }
+  ul.tasks input[type="checkbox"]:checked { border-color: var(--done); }
+  ul.tasks input[type="checkbox"]:checked::before { transform: scale(1); }
+  ul.tasks input[type="checkbox"]:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+  ul.tasks span { font-size: .95rem; }
+
+  code {
+    font-family: "IBM Plex Mono", monospace; font-size: .85em;
+    background: var(--citron-soft); border: 1px solid var(--line);
+    padding: .05em .35em; border-radius: 5px;
+  }
+  pre {
+    background: var(--code-bg); color: var(--code-ink);
+    border-radius: 10px; padding: .85rem 1rem; margin: .6rem 0;
+    overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: .82rem; line-height: 1.6;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  .who {
+    font-family: "IBM Plex Mono", monospace; font-size: .68rem;
+    border-radius: 99px; padding: .12rem .55rem; border: 1px solid var(--line);
+    color: var(--muted); white-space: nowrap;
+  }
+  .who.you { background: var(--citron-soft); color: var(--accent); }
+  .note {
+    border-left: 3px solid var(--citron);
+    padding: .35rem .8rem; margin: .6rem 0; font-size: .88rem; color: var(--muted);
+    background: var(--citron-soft); border-radius: 0 8px 8px 0;
+  }
+  footer { color: var(--muted); font-size: .85rem; margin-top: 2rem; }
+  @media (prefers-reduced-motion: reduce) { .bar > i, ul.tasks input::before { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">Habit Tracker · L14 · фінальна здача</div>
+    <h1>Шлях у прод</h1>
+    <p>Послідовний чеклист від локального репо до живого URL на Railway + запис rollback-у.
+       Галочки зберігаються в цьому браузері. Довідка з теорією — у шпаргалці, §8b.</p>
+  </header>
+
+  <div class="progress" role="status" aria-live="polite">
+    <div class="bar"><i id="bar"></i></div>
+    <span class="count" id="count">0/0</span>
+  </div>
+
+  <!-- ────────────────────────── 1 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">1</span><h2>Коміт і GitHub</h2><span class="who">Claude за твоєю командою</span><span class="meta">~15 хв</span></div>
+    <p>Без пуша не запуститься CI і не з'являться образи в GHCR (твій запасний rollback-шлях).</p>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="git-commit"><span>Сказати Claude «комітимо» (одним комітом або по уроках L8…L14) — або самому: <code>git add -A && git commit</code></span></label></li>
+      <li><label><input type="checkbox" data-k="git-repo"><span>Створити репо й запушити: <code>gh repo create habit-tracker --private --source . --push</code> (gh уже залогінений)</span></label></li>
+      <li><label><input type="checkbox" data-k="git-ci"><span>GitHub → Actions: дочекатись зеленого CI (lint · typecheck · unit · integration)</span></label></li>
+      <li><label><input type="checkbox" data-k="git-ghcr"><span>Після пуша в main: перевірити образи api/worker у Packages (GHCR), теги <code>:sha</code>/<code>:main</code>/<code>:latest</code></span></label></li>
+    </ul>
+  </section>
+
+  <!-- ────────────────────────── 2 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">2</span><h2>Ключі сервісів</h2><span class="who you">тільки ти</span><span class="meta">~30 хв, можна поступово</span></div>
+    <p>Без ключів усе інше працює — ці фічі просто «сплять». Значення підеш вносити у крок 3.</p>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="key-gh"><span><a href="https://github.com/settings/developers" target="_blank" rel="noopener">GitHub OAuth App</a> → New OAuth App; callback: <code>https://&lt;домен&gt;/api/auth/callback/github</code> → <code>GITHUB_CLIENT_ID/SECRET</code> (для локалу — окремий app із <code>http://localhost:3005/…</code>)</span></label></li>
+      <li><label><input type="checkbox" data-k="key-stripe"><span><a href="https://dashboard.stripe.com/test/apikeys" target="_blank" rel="noopener">Stripe test keys</a>: <code>sk_test_…</code> → <code>STRIPE_SECRET_KEY</code>, <code>pk_test_…</code> → <code>VITE_STRIPE_PUBLISHABLE_KEY</code></span></label></li>
+      <li><label><input type="checkbox" data-k="key-resend"><span><a href="https://resend.com" target="_blank" rel="noopener">Resend</a> → API key → <code>RESEND_API_KEY</code>, <code>EMAIL_PROVIDER=resend</code> (без свого домену шле лише на твою пошту з onboarding@resend.dev — для курсу ок)</span></label></li>
+      <li><label><input type="checkbox" data-k="key-sentry"><span><a href="https://sentry.io" target="_blank" rel="noopener">Sentry</a> → New project (Node) → <code>SENTRY_DSN</code> (один на api і worker)</span></label></li>
+    </ul>
+  </section>
+
+  <!-- ────────────────────────── 3 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">3</span><h2>Railway: перший деплой</h2><span class="who you">тільки ти (акаунт) → далі разом</span><span class="meta">~45 хв</span></div>
+    <p>Конфіги вже в репо: <code>apps/api/railway.json</code>, <code>apps/worker/railway.json</code>. Докладно — README → “Deploy to Railway”.</p>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="rw-acc"><span>Акаунт на <a href="https://railway.com" target="_blank" rel="noopener">railway.com</a> (вхід через GitHub; Hobby $5/міс із включеним кредитом)</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-cli"><span><a href="https://docs.railway.com/guides/cli" target="_blank" rel="noopener">CLI</a>: <code>brew install railway</code> → <code>railway login</code></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-init"><span>У теці проєкту: <code>railway init</code> → <code>railway add --database postgres</code> → <code>railway add --database redis</code></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-services"><span>Dashboard → New Service → GitHub Repo (двічі): сервіс <b>api</b> з config path <code>apps/api/railway.json</code>, сервіс <b>worker</b> з <code>apps/worker/railway.json</code></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-minio"><span>Сховище: <a href="https://railway.com/templates" target="_blank" rel="noopener">шаблон MinIO</a> (або <a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener">Cloudflare R2</a>)</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-vars"><span>Variables для api і worker — <b>референсами</b>, не значеннями:</span></label>
+<pre><code>PORT=3005
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+BETTER_AUTH_SECRET=&lt;openssl rand -base64 32&gt;
+API_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}      # api; для worker — публічний домен api
+WEB_URL=https://${{RAILWAY_PUBLIC_DOMAIN}}      # той самий origin: SPA роздає api
+S3_ENDPOINT=http://${{MinIO.RAILWAY_PRIVATE_DOMAIN}}:9000
+S3_PUBLIC_ENDPOINT=https://&lt;публічний-домен-minio&gt;
+S3_BUCKET=habit-tracker · S3_ACCESS_KEY / S3_SECRET_KEY — з MinIO
+EMAIL_PROVIDER=resend · RESEND_API_KEY · EMAIL_FROM
+STRIPE_SECRET_KEY · VITE_STRIPE_PUBLISHABLE_KEY · SENTRY_DSN</code></pre></li>
+      <li><label><input type="checkbox" data-k="rw-domain"><span><code>railway domain</code> (api) або свій домен + CNAME у Settings → Networking</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-verify"><span>Перевірка: URL відкриває застосунок; <code>/health</code> = 200 і <code>version</code> = sha коміту; в логах worker — «habit-tracker worker started»</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-demo"><span>Демо-акаунт: зареєструватись у UI (email+пароль) — його й здаєш</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-webhook"><span><a href="https://dashboard.stripe.com/test/webhooks" target="_blank" rel="noopener">Stripe webhook</a>: Add endpoint → <code>https://&lt;домен&gt;/webhooks/stripe</code>, події <code>payment_intent.succeeded/payment_failed/canceled</code> → Signing secret → <code>STRIPE_WEBHOOK_SECRET</code>; тест — карта <a href="https://docs.stripe.com/testing" target="_blank" rel="noopener">4242 4242 4242 4242</a></span></label></li>
+    </ul>
+    <div class="note">Приватна мережа: сервіси ходять один до одного по <code>*.railway.internal</code> — публічний URL для внутрішніх викликів = платний egress. Це і є відповідь «чому публічний URL коштував би грошей».</div>
+  </section>
+
+  <!-- ────────────────────────── 4 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">4</span><h2>Staging + PR-середовища</h2><span class="who you">ти (dashboard)</span><span class="meta">~15 хв</span></div>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="env-staging"><span>Environments → New → <b>staging</b> (duplicate з production) — <a href="https://docs.railway.com/reference/environments" target="_blank" rel="noopener">docs</a></span></label></li>
+      <li><label><input type="checkbox" data-k="env-branch"><span>api/worker у staging: Source → гілка <code>staging</code>; наш <code>railway.json</code> у staging сам сіє демо-дані на кожен деплой</span></label></li>
+      <li><label><input type="checkbox" data-k="env-keys"><span>Staging variables: test-ключі, свій BETTER_AUTH_SECRET; переконатись, що DATABASE_URL показує на staging-Postgres (референси в межах середовища — автоматично)</span></label></li>
+      <li><label><input type="checkbox" data-k="env-pr"><span>Project Settings → Environments → увімкнути PR environments</span></label></li>
+    </ul>
+  </section>
+
+  <!-- ────────────────────────── 5 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">5</span><h2>Бекапи + restore drill</h2><span class="who you">ти (dashboard)</span><span class="meta">~15 хв</span></div>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="bk-on"><span>Postgres → Volume → <a href="https://docs.railway.com/reference/backups" target="_blank" rel="noopener">Backups</a>: увімкнути daily</span></label></li>
+      <li><label><input type="checkbox" data-k="bk-restore"><span>Зробити manual backup → відновити його у <b>staging</b> із секундоміром</span></label></li>
+      <li><label><input type="checkbox" data-k="bk-rpo"><span>Записати числами: RPO (вік бекапа на момент відновлення) і RTO (скільки тривало) — у нотатку/README</span></label></li>
+    </ul>
+  </section>
+
+  <!-- ────────────────────────── 6 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">6</span><h2>Rollback drill + запис (deliverable C)</h2><span class="who you">ти</span><span class="meta">~15 хв</span></div>
+    <p>Запис екрану на macOS: <code>⌘⇧5</code>. Дві хвилини, без нарації — цього достатньо.</p>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="rb-break"><span>У гілку staging закомітити навмисну поломку (найкраще — міграцію, що падає: побачиш, як preDeploy блокує реліз; або зміну, що валить <code>/health</code>)</span></label></li>
+      <li><label><input type="checkbox" data-k="rb-roll"><span>Показати в записі: поганий деплой → Deployments → попередній Active → ⋮ → Redeploy → сервіс знову живий</span></label></li>
+      <li><label><input type="checkbox" data-k="rb-say"><span>Проговорити (чи текстом у кадрі): rollback повертає код за секунди, але <b>не відкочує схему БД і дані</b> — тому міграції additive</span></label></li>
+    </ul>
+  </section>
+
+  <!-- ────────────────────────── 7 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">7</span><h2>Здача</h2><span class="who you">ти</span><span class="meta">~10 хв</span></div>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="sub-gate"><span>Пройти «deploy gate» (12 пунктів) — шпаргалка §8b, все має бути ✅</span></label></li>
+      <li><label><input type="checkbox" data-k="sub-send"><span>У Slack курсу: живий URL + демо-акаунт (email/пароль) + запис rollback-у</span></label></li>
+    </ul>
+  </section>
+
+  <!-- ────────────────────────── 8 ────────────────────────── -->
+  <section class="step">
+    <div class="step-head"><span class="num">8</span><h2>Вивчити до захисту</h2><span class="who you">ти</span><span class="meta">фоново</span></div>
+    <ul class="tasks">
+      <li><label><input type="checkbox" data-k="learn-video"><span>Передивитись відео L7–L14 (Claude бачив лише слайди)</span></label></li>
+      <li><label><input type="checkbox" data-k="learn-shp"><span>Шпаргалка: §1 (як летить запит) → по уроку на вечір → §11 (питання на захист)</span></label></li>
+      <li><label><input type="checkbox" data-k="learn-aws"><span>AWS-мапа з §8b — на співбесідах питають саме назви</span></label></li>
+    </ul>
+  </section>
+
+  <footer>Разом ≈ 2–3 години чистої роботи. Кроки 1 і будь-який дебаг — можна делегувати Claude; акаунти, оплата і ключі — тільки ти.</footer>
+</div>
+
+<script>
+  (function () {
+    var KEY = "habit-deploy-checklist-v1";
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-k]'));
+    var bar = document.getElementById("bar");
+    var count = document.getElementById("count");
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { saved = {}; }
+    boxes.forEach(function (b) { if (saved[b.dataset.k]) b.checked = true; });
+    function render() {
+      var done = boxes.filter(function (b) { return b.checked; }).length;
+      bar.style.width = (boxes.length ? (done / boxes.length) * 100 : 0) + "%";
+      count.textContent = done + "/" + boxes.length;
+    }
+    boxes.forEach(function (b) {
+      b.addEventListener("change", function () {
+        saved[b.dataset.k] = b.checked;
+        try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) { /* private mode — ок */ }
+        render();
+      });
+    });
+    render();
+  })();
+</script>
