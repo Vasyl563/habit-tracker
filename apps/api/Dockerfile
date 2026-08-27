@@ -49,7 +49,9 @@ RUN pnpm --filter @habit-tracker/web build
 
 # ── 4. runtime ───────────────────────────────────────────────────────────────
 FROM base AS runtime
-ARG GIT_SHA=dev
+# empty default: at runtime the app falls back to RAILWAY_GIT_COMMIT_SHA;
+# CI passes the real sha as a build arg
+ARG GIT_SHA=
 ENV NODE_ENV=production
 ENV GIT_SHA=$GIT_SHA
 # absolute: the start script's cwd is /app/apps/api (pnpm --filter)
