@@ -1,0 +1,22 @@
+{
+  "name": "@habit-tracker/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.1",
+    "@habit-tracker/db": "workspace:*",
+    "better-auth": "^1.7.1"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
