@@ -146,6 +146,7 @@
     <h1>Шлях у прод</h1>
     <p>Послідовний чеклист від локального репо до живого URL на Railway + запис rollback-у.
        Галочки зберігаються в цьому браузері. Довідка з теорією — у шпаргалці, §8b.</p>
+    <div class="note" style="margin-top:.8rem">Стан: <b>production живий</b> — <a href="https://api-production-1c15.up.railway.app" target="_blank" rel="noopener">api-production-1c15.up.railway.app</a> (SPA + /v1/docs + /health, preDeploy-міграції та health-гейт підтверджені логами). Демо-акаунт: <code>demo@habit-tracker.app</code> / <code>Demo1234!</code></div>
   </header>
 
   <div class="progress" role="status" aria-live="polite">
@@ -155,13 +156,13 @@
 
   <!-- ────────────────────────── 1 ────────────────────────── -->
   <section class="step">
-    <div class="step-head"><span class="num">1</span><h2>Коміт і GitHub</h2><span class="who">Claude за твоєю командою</span><span class="meta">~15 хв</span></div>
+    <div class="step-head"><span class="num">1</span><h2>Коміт і GitHub</h2><span class="who">Claude за твоєю командою</span><span class="meta">✓ виконано 27.08</span></div>
     <p>Без пуша не запуститься CI і не з'являться образи в GHCR (твій запасний rollback-шлях).</p>
     <ul class="tasks">
-      <li><label><input type="checkbox" data-k="git-commit"><span>Сказати Claude «комітимо» (одним комітом або по уроках L8…L14) — або самому: <code>git add -A && git commit</code></span></label></li>
-      <li><label><input type="checkbox" data-k="git-repo"><span>Створити репо й запушити: <code>gh repo create habit-tracker --private --source . --push</code> (gh уже залогінений)</span></label></li>
-      <li><label><input type="checkbox" data-k="git-ci"><span>GitHub → Actions: дочекатись зеленого CI (lint · typecheck · unit · integration)</span></label></li>
-      <li><label><input type="checkbox" data-k="git-ghcr"><span>Після пуша в main: перевірити образи api/worker у Packages (GHCR), теги <code>:sha</code>/<code>:main</code>/<code>:latest</code></span></label></li>
+      <li><label><input type="checkbox" data-k="git-commit" checked><span>Сказати Claude «комітимо» (одним комітом або по уроках L8…L14) — або самому: <code>git add -A && git commit</code></span></label></li>
+      <li><label><input type="checkbox" data-k="git-repo" checked><span>Створити репо й запушити: <code>gh repo create habit-tracker --private --source . --push</code> (gh уже залогінений)</span></label></li>
+      <li><label><input type="checkbox" data-k="git-ci" checked><span>GitHub → Actions: дочекатись зеленого CI (lint · typecheck · unit · integration)</span></label></li>
+      <li><label><input type="checkbox" data-k="git-ghcr" checked><span>Після пуша в main: перевірити образи api/worker у Packages (GHCR), теги <code>:sha</code>/<code>:main</code>/<code>:latest</code></span></label></li>
     </ul>
   </section>
 
@@ -182,12 +183,12 @@
     <div class="step-head"><span class="num">3</span><h2>Railway: перший деплой</h2><span class="who you">тільки ти (акаунт) → далі разом</span><span class="meta">~45 хв</span></div>
     <p>Конфіги вже в репо: <code>apps/api/railway.json</code>, <code>apps/worker/railway.json</code>. Докладно — README → “Deploy to Railway”.</p>
     <ul class="tasks">
-      <li><label><input type="checkbox" data-k="rw-acc"><span>Акаунт на <a href="https://railway.com" target="_blank" rel="noopener">railway.com</a> (вхід через GitHub; Hobby $5/міс із включеним кредитом)</span></label></li>
-      <li><label><input type="checkbox" data-k="rw-cli"><span><a href="https://docs.railway.com/guides/cli" target="_blank" rel="noopener">CLI</a>: <code>brew install railway</code> → <code>railway login</code></span></label></li>
-      <li><label><input type="checkbox" data-k="rw-init"><span>У теці проєкту: <code>railway init</code> → <code>railway add --database postgres</code> → <code>railway add --database redis</code></span></label></li>
-      <li><label><input type="checkbox" data-k="rw-services"><span>Dashboard → New Service → GitHub Repo (двічі): сервіс <b>api</b> з config path <code>apps/api/railway.json</code>, сервіс <b>worker</b> з <code>apps/worker/railway.json</code></span></label></li>
-      <li><label><input type="checkbox" data-k="rw-minio"><span>Сховище: <a href="https://railway.com/templates" target="_blank" rel="noopener">шаблон MinIO</a> (або <a href="https://developers.cloudflare.com/r2/" target="_blank" rel="noopener">Cloudflare R2</a>)</span></label></li>
-      <li><label><input type="checkbox" data-k="rw-vars"><span>Variables для api і worker — <b>референсами</b>, не значеннями:</span></label>
+      <li><label><input type="checkbox" data-k="rw-acc" checked><span>Акаунт на <a href="https://railway.com" target="_blank" rel="noopener">railway.com</a> (вхід через GitHub; Hobby $5/міс із включеним кредитом)</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-cli" checked><span><a href="https://docs.railway.com/guides/cli" target="_blank" rel="noopener">CLI</a>: <code>brew install railway</code> → <code>railway login</code></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-init" checked><span>У теці проєкту: <code>railway init</code> → <code>railway add --database postgres</code> → <code>railway add --database redis</code></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-services" checked><span>Dashboard → New Service → GitHub Repo (двічі): сервіс <b>api</b> з config path <code>apps/api/railway.json</code>, сервіс <b>worker</b> з <code>apps/worker/railway.json</code></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-minio"><span>Сховище MinIO: шаблон поставлено (сервіс <code>Bucket</code>), але контейнер не стартує на trial-акаунті («Failed to create deployment»). Розблокується апгрейдом на Hobby: dashboard → Billing → Upgrade — потім Claude передеплоїть одною командою. До того не працюють лише аплоади аватарок</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-vars" checked><span>Variables для api і worker — <b>референсами</b>, не значеннями:</span></label>
 <pre><code>PORT=3005
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 REDIS_URL=${{Redis.REDIS_URL}}
@@ -199,10 +200,10 @@ S3_PUBLIC_ENDPOINT=https://&lt;публічний-домен-minio&gt;
 S3_BUCKET=habit-tracker · S3_ACCESS_KEY / S3_SECRET_KEY — з MinIO
 EMAIL_PROVIDER=resend · RESEND_API_KEY · EMAIL_FROM
 STRIPE_SECRET_KEY · VITE_STRIPE_PUBLISHABLE_KEY · SENTRY_DSN</code></pre></li>
-      <li><label><input type="checkbox" data-k="rw-domain"><span><code>railway domain</code> (api) або свій домен + CNAME у Settings → Networking</span></label></li>
-      <li><label><input type="checkbox" data-k="rw-verify"><span>Перевірка: URL відкриває застосунок; <code>/health</code> = 200 і <code>version</code> = sha коміту; в логах worker — «habit-tracker worker started»</span></label></li>
-      <li><label><input type="checkbox" data-k="rw-demo"><span>Демо-акаунт: зареєструватись у UI (email+пароль) — його й здаєш</span></label></li>
-      <li><label><input type="checkbox" data-k="rw-webhook"><span><a href="https://dashboard.stripe.com/test/webhooks" target="_blank" rel="noopener">Stripe webhook</a>: Add endpoint → <code>https://&lt;домен&gt;/webhooks/stripe</code>, події <code>payment_intent.succeeded/payment_failed/canceled</code> → Signing secret → <code>STRIPE_WEBHOOK_SECRET</code>; тест — карта <a href="https://docs.stripe.com/testing" target="_blank" rel="noopener">4242 4242 4242 4242</a></span></label></li>
+      <li><label><input type="checkbox" data-k="rw-domain" checked><span><code>railway domain</code> (api) або свій домен + CNAME у Settings → Networking</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-verify" checked><span>Перевірка: URL відкриває застосунок ✓; <code>/health</code> = 200 ✓; worker started ✓. <code>version</code> = sha коміту — стане після пуша фіксу <code>GIT_SHA</code> (готовий локально, чекає на «так»)</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-demo" checked><span>Демо-акаунт створено: <code>demo@habit-tracker.app</code> / <code>Demo1234!</code> — 2 звички, стрік 2 дні</span></label></li>
+      <li><label><input type="checkbox" data-k="rw-webhook"><span><a href="https://dashboard.stripe.com/test/webhooks" target="_blank" rel="noopener">Stripe webhook</a>: Add endpoint → <code>https://&lt;домен&gt;/webhooks/stripe</code>, події <code>payment_intent.succeeded/payment_failed/canceled</code> → Signing secret → <code>STRIPE_WEBHOOK_SECRET</code>; потребує ключів із кроку 2; тест — карта <a href="https://docs.stripe.com/testing" target="_blank" rel="noopener">4242 4242 4242 4242</a></span></label></li>
     </ul>
     <div class="note">Приватна мережа: сервіси ходять один до одного по <code>*.railway.internal</code> — публічний URL для внутрішніх викликів = платний egress. Це і є відповідь «чому публічний URL коштував би грошей».</div>
   </section>
