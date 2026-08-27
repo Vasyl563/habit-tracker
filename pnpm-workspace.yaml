@@ -1,3 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Native/postinstall builds we explicitly trust (pnpm 10 blocks scripts by default).
+onlyBuiltDependencies:
+  - "@biomejs/biome"
+  - esbuild
+  - sharp
+  - "@sentry/node"
+  - "@sentry-internal/node-native-stacktrace"

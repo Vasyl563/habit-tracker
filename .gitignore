@@ -1,7 +1,11 @@
 node_modules
 dist
 .env
+.env.docker
+.env.*.local
 .turbo
 *.log
+coverage
+.claude/launch.json
 
 # Keep committed: packages/db/drizzle (migrations are version-controlled)

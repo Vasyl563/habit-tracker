@@ -7,19 +7,29 @@
     "node": ">=20"
   },
   "scripts": {
-    "db:up": "docker compose up -d",
+    "db:up": "docker compose up -d postgres redis minio minio-init mailpit",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @habit-tracker/db db:generate",
     "db:migrate": "pnpm --filter @habit-tracker/db db:migrate",
     "db:seed": "pnpm --filter @habit-tracker/db db:seed",
+    "db:reset": "pnpm --filter @habit-tracker/db db:reset",
     "db:studio": "pnpm --filter @habit-tracker/db db:studio",
     "dev": "turbo run dev",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "stack:up": "docker compose --profile app up --build -d",
+    "stack:down": "docker compose --profile app down"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.9",
     "@types/node": "^26.0.1",
     "tsx": "^4.22.4",
     "turbo": "^2.10.2",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
   }
 }
