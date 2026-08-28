@@ -56,6 +56,6 @@ export const envSchema = z
 export type Env = z.infer<typeof envSchema>;
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  source.GIT_SHA ??= source.RAILWAY_GIT_COMMIT_SHA;
+  if (!source.GIT_SHA) source.GIT_SHA = source.RAILWAY_GIT_COMMIT_SHA; // '' counts as unset
   return parseEnv(envSchema, source);
 }
