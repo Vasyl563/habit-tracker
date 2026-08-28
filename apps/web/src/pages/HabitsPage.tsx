@@ -3,9 +3,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 import { orpc } from "../api/client.js";
 import { describeError } from "../api/errors.js";
+import { type MessageKey, type Translator, useI18n } from "../lib/i18n.js";
+import { DAY_NAMES, scheduleLabel } from "../lib/ui.js";
 
 const PAGE = 6;
 const SORTS = ["createdAt", "name", "currentStreak", "totalCheckIns"] as const;
+const SORT_LABELS: Record<(typeof SORTS)[number], MessageKey> = {
+  createdAt: "sort.createdAt",
+  name: "sort.name",
+  currentStreak: "sort.currentStreak",
+  totalCheckIns: "sort.totalCheckIns"
+};
 
 /**
  * The L8 list screen: offset pagination + filters + search + whitelisted sort,
@@ -14,12 +22,15 @@ const SORTS = ["createdAt", "name", "currentStreak", "totalCheckIns"] as const;
  */
 export function HabitsPage() {
   const queryClient = useQueryClient();
+  const { locale, t, tp } = useI18n();
   const [offset, setOffset] = useState(0);
   const [q, setQ] = useState("");
   const [visibility, setVisibility] = useState<HabitVisibility | "">("");
   const [schedule, setSchedule] = useState<ScheduleType | "">("");
   const [sortBy, setSortBy] = useState<(typeof SORTS)[number]>("createdAt");
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ kind: "notice" | "error"; text: string } | null>(null);
+  // controlled only to show the weekday picker when "weekly" is selected
+  const [newSchedule, setNewSchedule] = useState<ScheduleType>("daily");
 
   const input = {
     limit: PAGE,
@@ -38,29 +49,30 @@ export function HabitsPage() {
   const create = useMutation(
     orpc.habits.create.mutationOptions({
       onSuccess: () => {
-        setMessage("Habit created");
+        setMessage({ kind: "notice", text: t("habits.created") });
         void invalidate();
       },
-      onError: (e) => setMessage(describeError(e))
+      onError: (e) => setMessage({ kind: "error", text: describeError(e, t) })
     })
   );
   const checkIn = useMutation(
     orpc.checkIns.create.mutationOptions({
       onSuccess: (r) => {
-        setMessage(
-          r.streak.milestone
-            ? `🔥 ${r.streak.milestone}-day milestone! Streak ${r.streak.current}`
-            : `Checked in — streak ${r.streak.current}`
-        );
+        setMessage({
+          kind: "notice",
+          text: r.streak.milestone
+            ? t("habits.milestone", { m: r.streak.milestone, s: r.streak.current })
+            : t("habits.checkedIn", { s: r.streak.current })
+        });
         void invalidate();
       },
-      onError: (e) => setMessage(describeError(e))
+      onError: (e) => setMessage({ kind: "error", text: describeError(e, t) })
     })
   );
   const archive = useMutation(
     orpc.habits.archive.mutationOptions({
       onSuccess: () => void invalidate(),
-      onError: (e) => setMessage(describeError(e))
+      onError: (e) => setMessage({ kind: "error", text: describeError(e, t) })
     })
   );
 
@@ -77,6 +89,7 @@ export function HabitsPage() {
       visibility: String(f.get("visibility")) as HabitVisibility
     });
     e.currentTarget.reset();
+    setNewSchedule("daily");
   }
 
   const total = list.data?.total ?? 0;
@@ -84,35 +97,86 @@ export function HabitsPage() {
 
   return (
     <div className="stack">
-      <h1>My habits</h1>
+      <div className="page-head">
+        <div>
+          <h1>{t("habits.title")}</h1>
+          <p className="sub">
+            {total === 0
+              ? t("habits.subtitleEmpty")
+              : t("habits.subtitle", { n: total, unit: tp(total, "unit.habit") })}
+          </p>
+        </div>
+      </div>
 
-      <form className="card row wrap" onSubmit={onCreate}>
-        <input name="name" placeholder="New habit, e.g. Read 20 pages" required maxLength={80} />
-        <input name="description" placeholder="description (optional)" maxLength={500} />
-        <select name="schedule" defaultValue="daily">
-          <option value="daily">daily</option>
-          <option value="weekly">weekly</option>
-        </select>
-        <span className="row" title="weekdays (for weekly)">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d, i) => (
-            <label key={d} className="chip">
-              <input type="checkbox" name={`wd${i}`} /> {d}
+      <details className="creator">
+        <summary>➕ {t("habits.new")}</summary>
+        <form className="stack" onSubmit={onCreate}>
+          <div className="field-grid">
+            <label>
+              {t("habits.name")}
+              <input
+                name="name"
+                placeholder={t("habits.namePlaceholder")}
+                required
+                maxLength={80}
+              />
             </label>
-          ))}
-        </span>
-        <select name="visibility" defaultValue="private">
-          <option value="private">private</option>
-          <option value="friends">friends</option>
-          <option value="public">public</option>
-        </select>
-        <button type="submit" disabled={create.isPending}>
-          Add
-        </button>
-      </form>
+            <label>
+              <span>
+                {t("habits.description")} <span className="muted">{t("habits.optional")}</span>
+              </span>
+              <input
+                name="description"
+                placeholder={t("habits.descriptionPlaceholder")}
+                maxLength={500}
+              />
+            </label>
+          </div>
+          <div className="field-grid">
+            <label>
+              {t("habits.howOften")}
+              <select
+                name="schedule"
+                value={newSchedule}
+                onChange={(e) => setNewSchedule(e.target.value as ScheduleType)}
+              >
+                <option value="daily">{t("habits.daily")}</option>
+                <option value="weekly">{t("habits.weekly")}</option>
+              </select>
+            </label>
+            <label>
+              {t("habits.visibility")}
+              <select name="visibility" defaultValue="private">
+                <option value="private">{t("habits.visPrivate")}</option>
+                <option value="friends">{t("habits.visFriends")}</option>
+                <option value="public">{t("habits.visPublic")}</option>
+              </select>
+            </label>
+          </div>
+          {newSchedule === "weekly" ? (
+            <div className="field">
+              {t("habits.whichDays")}
+              <div className="row wrap">
+                {DAY_NAMES[locale].map((d, i) => (
+                  <label key={d} className="day-chip">
+                    <input type="checkbox" name={`wd${i}`} /> {d}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <div className="row">
+            <button type="submit" disabled={create.isPending}>
+              {t("habits.create")}
+            </button>
+          </div>
+        </form>
+      </details>
 
-      <div className="row wrap">
+      <div className="toolbar">
         <input
-          placeholder="search…"
+          className="search"
+          placeholder={t("habits.searchPlaceholder")}
           value={q}
           onChange={(e) => {
             setQ(e.target.value);
@@ -126,10 +190,10 @@ export function HabitsPage() {
             setOffset(0);
           }}
         >
-          <option value="">any visibility</option>
-          <option value="public">public</option>
-          <option value="friends">friends</option>
-          <option value="private">private</option>
+          <option value="">{t("habits.filterVisibilityAll")}</option>
+          <option value="public">{t("habits.fPublic")}</option>
+          <option value="friends">{t("habits.fFriends")}</option>
+          <option value="private">{t("habits.fPrivate")}</option>
         </select>
         <select
           value={schedule}
@@ -138,9 +202,9 @@ export function HabitsPage() {
             setOffset(0);
           }}
         >
-          <option value="">any schedule</option>
-          <option value="daily">daily</option>
-          <option value="weekly">weekly</option>
+          <option value="">{t("habits.filterScheduleAll")}</option>
+          <option value="daily">{t("habits.fDaily")}</option>
+          <option value="weekly">{t("habits.fWeekly")}</option>
         </select>
         <select
           value={sortBy}
@@ -148,58 +212,79 @@ export function HabitsPage() {
         >
           {SORTS.map((s) => (
             <option key={s} value={s}>
-              sort: {s}
+              {t(SORT_LABELS[s])}
             </option>
           ))}
         </select>
       </div>
 
-      {message ? <p className="notice">{message}</p> : null}
-      {list.isError ? <p className="error">{describeError(list.error)}</p> : null}
+      {message ? <p className={`banner ${message.kind}`}>{message.text}</p> : null}
+      {list.isError ? <p className="banner error">{describeError(list.error, t)}</p> : null}
 
       <ul className="grid">
         {items.map((h) => (
           <HabitCard
             key={h.id}
             habit={h}
+            t={t}
+            tp={tp}
+            locale={locale}
             onCheckIn={() => checkIn.mutate({ habitId: h.id })}
             onArchive={() => archive.mutate({ id: h.id })}
             busy={checkIn.isPending}
           />
         ))}
       </ul>
-      {!list.isLoading && items.length === 0 ? <p className="muted">No habits match.</p> : null}
+      {!list.isLoading && items.length === 0 ? (
+        <div className="empty">
+          <span className="icon">🌱</span>
+          {q || visibility || schedule ? t("habits.emptyFiltered") : t("habits.emptyNone")}
+        </div>
+      ) : null}
 
-      <div className="row">
-        <button
-          type="button"
-          disabled={offset === 0}
-          onClick={() => setOffset(Math.max(0, offset - PAGE))}
-        >
-          ← Prev
-        </button>
-        <span className="muted">
-          {total === 0 ? "0" : `${offset + 1}–${Math.min(offset + PAGE, total)}`} of {total}
-        </span>
-        <button
-          type="button"
-          disabled={offset + PAGE >= total}
-          onClick={() => setOffset(offset + PAGE)}
-        >
-          Next →
-        </button>
-      </div>
+      {total > PAGE ? (
+        <div className="pager">
+          <button
+            type="button"
+            className="secondary small"
+            disabled={offset === 0}
+            onClick={() => setOffset(Math.max(0, offset - PAGE))}
+          >
+            {t("pager.prev")}
+          </button>
+          <span>
+            {t("pager.of", {
+              range: total === 0 ? "0" : `${offset + 1}–${Math.min(offset + PAGE, total)}`,
+              total
+            })}
+          </span>
+          <button
+            type="button"
+            className="secondary small"
+            disabled={offset + PAGE >= total}
+            onClick={() => setOffset(offset + PAGE)}
+          >
+            {t("pager.next")}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function HabitCard({
   habit,
+  t,
+  tp,
+  locale,
   onCheckIn,
   onArchive,
   busy
 }: {
   habit: HabitDto;
+  t: Translator;
+  tp: (n: number, base: "unit.day" | "unit.habit") => string;
+  locale: "uk" | "en";
   onCheckIn: () => void;
   onArchive: () => void;
   busy: boolean;
@@ -207,24 +292,35 @@ function HabitCard({
   const today = new Date().toISOString().slice(0, 10);
   const doneToday = habit.lastCheckInDate === today;
   return (
-    <li className="card stack">
+    <li className="card habit-card">
       <div className="row space">
         <strong>{habit.name}</strong>
-        <span className={`tag tag-${habit.visibility}`}>{habit.visibility}</span>
+        <span className={`tag tag-${habit.visibility}`}>{t(`tag.${habit.visibility}`)}</span>
       </div>
-      {habit.description ? <p className="muted">{habit.description}</p> : null}
-      <p className="muted">
-        {habit.schedule === "daily" ? "every day" : `weekdays ${(habit.weekdays ?? []).join(",")}`}{" "}
-        · 🔥 {habit.currentStreak} (best {habit.longestStreak}) · {habit.totalCheckIns} check-ins
-      </p>
-      <div className="row">
-        <button type="button" onClick={onCheckIn} disabled={busy || doneToday}>
-          {doneToday ? "Done today ✓" : "Check in today"}
-        </button>
-        <button type="button" className="link" onClick={onArchive}>
-          archive
-        </button>
+      {habit.description ? <p className="desc">{habit.description}</p> : null}
+      <div className="habit-meta">
+        <span title={t("card.scheduleTitle")}>
+          📅 {scheduleLabel(habit.schedule, habit.weekdays, locale, t)}
+        </span>
+        <span className="streak" title={t("card.longestTitle", { n: habit.longestStreak })}>
+          🔥 {habit.currentStreak}
+          <span className="unit">{tp(habit.currentStreak, "unit.day")}</span>
+        </span>
+        <span title={t("card.checkInsTitle")}>✅ {habit.totalCheckIns}</span>
       </div>
+      <footer>
+        <button
+          type="button"
+          className={doneToday ? "done" : ""}
+          onClick={onCheckIn}
+          disabled={busy || doneToday}
+        >
+          {doneToday ? t("card.doneToday") : t("card.checkIn")}
+        </button>
+        <button type="button" className="link danger small" onClick={onArchive}>
+          {t("card.archive")}
+        </button>
+      </footer>
     </li>
   );
 }

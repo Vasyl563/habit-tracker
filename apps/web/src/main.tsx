@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { App } from "./App.js";
+import { LocaleProvider } from "./lib/i18n.js";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -12,9 +13,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <LocaleProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </LocaleProvider>
     </QueryClientProvider>
   </StrictMode>
 );

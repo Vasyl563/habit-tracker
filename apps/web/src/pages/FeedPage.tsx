@@ -3,9 +3,13 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { orpc } from "../api/client.js";
 import { describeError } from "../api/errors.js";
+import { Avatar } from "../components/Avatar.js";
+import { useI18n } from "../lib/i18n.js";
+import { humanDate } from "../lib/ui.js";
 
 /** Feed-shaped resource → cursor pagination → "Load more" (L8). */
 export function FeedPage() {
+  const { locale, t, tp } = useI18n();
   const feed = useInfiniteQuery(
     orpc.feed.list.infiniteOptions({
       input: (cursor: string | undefined) => ({ limit: 10, cursor }),
@@ -23,22 +27,43 @@ export function FeedPage() {
   return (
     <div className="two-col">
       <section className="stack">
-        <h1>Feed</h1>
-        {feed.isError ? <p className="error">{describeError(feed.error)}</p> : null}
+        <div className="page-head">
+          <div>
+            <h1>{t("feed.title")}</h1>
+            <p className="sub">{t("feed.sub")}</p>
+          </div>
+        </div>
+        {feed.isError ? <p className="banner error">{describeError(feed.error, t)}</p> : null}
         {items.length === 0 && !feed.isLoading ? (
-          <p className="muted">Nothing yet — follow someone from the “People” panel.</p>
+          <div className="empty">
+            <span className="icon">👋</span>
+            {t("feed.empty")}
+          </div>
         ) : null}
         <ul className="stack">
           {items.map((item) => (
-            <li key={item.id} className="card">
-              <Link to={`/users/${item.user.id}`}>
-                <strong>{item.user.name}</strong>
-              </Link>{" "}
-              checked in <em>{item.habit.name}</em> for {item.date}
-              {item.note ? <span className="muted"> — “{item.note}”</span> : null}
-              <div className="muted">
-                🔥 {item.habit.currentStreak} ·{" "}
-                <span className={`tag tag-${item.habit.visibility}`}>{item.habit.visibility}</span>
+            <li key={item.id} className="card feed-item">
+              <Avatar name={item.user.name} image={item.user.image} />
+              <div className="grow">
+                <div className="row space wrap">
+                  <span>
+                    <Link to={`/users/${item.user.id}`}>
+                      <strong>{item.user.name}</strong>
+                    </Link>{" "}
+                    {t("feed.checkedIn")} <strong>{item.habit.name}</strong>
+                  </span>
+                  <span className="when">{humanDate(item.date, locale, t)}</span>
+                </div>
+                <div className="habit-meta">
+                  <span className="streak">
+                    🔥 {item.habit.currentStreak}
+                    <span className="unit">{tp(item.habit.currentStreak, "unit.day")}</span>
+                  </span>
+                  <span className={`tag tag-${item.habit.visibility}`}>
+                    {t(`tag.${item.habit.visibility}`)}
+                  </span>
+                </div>
+                {item.note ? <div className="note">“{item.note}”</div> : null}
               </div>
             </li>
           ))}
@@ -46,28 +71,35 @@ export function FeedPage() {
         {feed.hasNextPage ? (
           <button
             type="button"
+            className="secondary"
             onClick={() => feed.fetchNextPage()}
             disabled={feed.isFetchingNextPage}
           >
-            {feed.isFetchingNextPage ? "…" : "Load more"}
+            {feed.isFetchingNextPage ? t("feed.loading") : t("feed.loadMore")}
           </button>
         ) : null}
       </section>
 
-      <aside className="stack">
-        <h2>People</h2>
+      <aside className="card stack">
+        <h2>{t("feed.people")}</h2>
         <input
-          placeholder="find by name or email…"
+          placeholder={t("feed.peoplePlaceholder")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <ul className="stack">
+        <ul className="list people">
           {(people.data?.items ?? []).map((u) => (
             <li key={u.id}>
-              <Link to={`/users/${u.id}`}>{u.name}</Link>
+              <Link to={`/users/${u.id}`}>
+                <Avatar name={u.name} image={u.image} />
+                {u.name}
+              </Link>
             </li>
           ))}
         </ul>
+        {people.data && people.data.items.length === 0 ? (
+          <p className="muted small">{t("feed.nobody")}</p>
+        ) : null}
       </aside>
     </div>
   );

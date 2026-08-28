@@ -3,11 +3,22 @@ import { NavLink, Outlet, useNavigate } from "react-router";
 import { signOut, useSession } from "../api/auth.js";
 import { orpc } from "../api/client.js";
 import { useSse } from "../api/sse.js";
+import { type MessageKey, useI18n } from "../lib/i18n.js";
+import { Avatar } from "./Avatar.js";
+import { LangSwitch } from "./LangSwitch.js";
+
+const NAV: readonly { to: string; icon: string; label: MessageKey }[] = [
+  { to: "/habits", icon: "✅", label: "nav.habits" },
+  { to: "/feed", icon: "📣", label: "nav.feed" },
+  { to: "/notifications", icon: "🔔", label: "nav.inbox" },
+  { to: "/settings", icon: "⚙️", label: "nav.settings" }
+];
 
 export function Layout() {
   const { data: session } = useSession();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useI18n();
   const unread = useQuery(orpc.notifications.unreadCount.queryOptions());
 
   // live badge: the worker publishes on every new notification (SSE, L11)
@@ -28,25 +39,27 @@ export function Layout() {
     <div className="shell">
       <header className="topbar">
         <NavLink to="/habits" className="brand">
-          🎯 Habit Tracker
+          🎯 <span>Habit Tracker</span>
         </NavLink>
         <nav>
-          <NavLink to="/habits">Habits</NavLink>
-          <NavLink to="/feed">Feed</NavLink>
-          <NavLink to="/notifications">
-            Inbox{" "}
-            {unread.data && unread.data.count > 0 ? (
-              <span className="badge">{unread.data.count}</span>
-            ) : null}
-          </NavLink>
-          <NavLink to="/settings">Settings</NavLink>
+          {NAV.map((item) => (
+            <NavLink key={item.to} to={item.to}>
+              <span aria-hidden>{item.icon}</span>
+              <span className="label">{t(item.label)}</span>
+              {item.to === "/notifications" && unread.data && unread.data.count > 0 ? (
+                <span className="badge">{unread.data.count}</span>
+              ) : null}
+            </NavLink>
+          ))}
         </nav>
         <div className="user">
-          <span className="muted" title={`SSE: ${sseStatus}`}>
-            {sseStatus === "open" ? "●" : "○"}
-          </span>
-          {session?.user.image ? <img className="avatar" src={session.user.image} alt="" /> : null}
-          <span>{session?.user.name}</span>
+          <span
+            className={`live-dot ${sseStatus === "open" ? "on" : ""}`}
+            title={sseStatus === "open" ? t("layout.liveOn") : t("layout.liveOff")}
+          />
+          <LangSwitch />
+          {session ? <Avatar name={session.user.name} image={session.user.image} /> : null}
+          <span className="name">{session?.user.name}</span>
           <button
             type="button"
             className="link"
@@ -56,7 +69,7 @@ export function Layout() {
               navigate("/sign-in");
             }}
           >
-            Sign out
+            {t("layout.signOut")}
           </button>
         </div>
       </header>

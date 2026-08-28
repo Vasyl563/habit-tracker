@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router";
 import { useSession } from "./api/auth.js";
 import { Layout } from "./components/Layout.js";
+import { useI18n } from "./lib/i18n.js";
 import { FeedPage } from "./pages/FeedPage.js";
 import { HabitsPage } from "./pages/HabitsPage.js";
 import { NotificationsPage } from "./pages/NotificationsPage.js";
@@ -14,7 +15,13 @@ import { SignUpPage } from "./pages/SignUpPage.js";
 function RequireAuth({ children }: { children: ReactNode }) {
   const { data, isPending } = useSession();
   const location = useLocation();
-  if (isPending) return <p className="muted">Loading session…</p>;
+  const { t } = useI18n();
+  if (isPending)
+    return (
+      <div className="center">
+        <span className="spinner" /> {t("app.loadingSession")}
+      </div>
+    );
   if (!data) return <Navigate to="/sign-in" state={{ from: location.pathname }} replace />;
   return <>{children}</>;
 }

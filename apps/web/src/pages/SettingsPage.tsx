@@ -6,12 +6,16 @@ import { type FormEvent, useState } from "react";
 import { orpc } from "../api/client.js";
 import { describeError } from "../api/errors.js";
 import { useSse } from "../api/sse.js";
+import { Avatar } from "../components/Avatar.js";
+import { useI18n } from "../lib/i18n.js";
+import { dateTime } from "../lib/ui.js";
 
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 export function SettingsPage() {
   const queryClient = useQueryClient();
+  const { locale, t } = useI18n();
   const me = useQuery(orpc.users.me.queryOptions());
   const billing = useQuery(orpc.billing.status.queryOptions());
   const [msg, setMsg] = useState<string | null>(null);
@@ -20,13 +24,13 @@ export function SettingsPage() {
   const updateMe = useMutation(
     orpc.users.updateMe.mutationOptions({
       onSuccess: refreshMe,
-      onError: (e) => setMsg(describeError(e))
+      onError: (e) => setMsg(describeError(e, t))
     })
   );
   const updateSettings = useMutation(
     orpc.users.updateSettings.mutationOptions({
       onSuccess: refreshMe,
-      onError: (e) => setMsg(describeError(e))
+      onError: (e) => setMsg(describeError(e, t))
     })
   );
 
@@ -34,82 +38,110 @@ export function SettingsPage() {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     updateMe.mutate({ name: String(f.get("name")), bio: String(f.get("bio") || "") || null });
-    setMsg("Profile saved");
+    setMsg(t("settings.saved"));
   }
 
-  if (me.isLoading) return <p className="muted">Loading…</p>;
-  if (me.isError || !me.data) return <p className="error">{describeError(me.error)}</p>;
+  if (me.isLoading)
+    return (
+      <div className="center">
+        <span className="spinner" /> {t("feed.loading")}
+      </div>
+    );
+  if (me.isError || !me.data) return <p className="banner error">{describeError(me.error, t)}</p>;
   const user = me.data;
 
   return (
     <div className="stack">
-      <h1>Settings</h1>
-      {msg ? <p className="notice">{msg}</p> : null}
+      <div className="page-head">
+        <div>
+          <h1>{t("settings.title")}</h1>
+          <p className="sub">
+            {t("settings.account")} {user.email} ·{" "}
+            {user.emailVerified ? t("settings.verified") : t("settings.notVerified")} ·{" "}
+            {t("settings.plan")}{" "}
+            <strong>{user.plan === "pro" ? "Pro ⭐" : t("settings.planFree")}</strong>
+          </p>
+        </div>
+      </div>
+      {msg ? <p className="banner notice">{msg}</p> : null}
 
       <section className="card stack">
-        <h2>Profile</h2>
+        <h2>{t("settings.profile")}</h2>
         <form className="stack" onSubmit={onProfile}>
-          <label>
-            Name <input name="name" defaultValue={user.name} required maxLength={80} />
-          </label>
-          <label>
-            Bio <input name="bio" defaultValue={user.bio ?? ""} maxLength={280} />
-          </label>
+          <div className="field-grid">
+            <label>
+              {t("settings.name")}{" "}
+              <input name="name" defaultValue={user.name} required maxLength={80} />
+            </label>
+            <label>
+              {t("settings.bio")}{" "}
+              <input
+                name="bio"
+                defaultValue={user.bio ?? ""}
+                maxLength={280}
+                placeholder={t("settings.bioPlaceholder")}
+              />
+            </label>
+          </div>
           <div className="row">
-            <button type="submit">Save</button>
-            <span className="muted">
-              {user.email} · {user.emailVerified ? "verified" : "email not verified"} · plan{" "}
-              <strong>{user.plan}</strong>
-            </span>
+            <button type="submit" disabled={updateMe.isPending}>
+              {t("settings.save")}
+            </button>
           </div>
         </form>
       </section>
 
       <section className="card stack">
-        <h2>Avatar</h2>
-        <AvatarUpload currentImage={user.image} onDone={refreshMe} />
+        <h2>{t("settings.avatar")}</h2>
+        <p className="muted small">{t("settings.avatarHint")}</p>
+        <AvatarUpload name={user.name} currentImage={user.image} onDone={refreshMe} />
       </section>
 
       <section className="card stack">
-        <h2>Notifications</h2>
-        <label className="row">
+        <h2>{t("settings.notifications")}</h2>
+        <label className="switch">
           <input
             type="checkbox"
             checked={user.settings.emailNotifications}
             onChange={(e) => updateSettings.mutate({ emailNotifications: e.target.checked })}
           />
-          Email me about follows, streak milestones and receipts
+          <span className="track" />
+          {t("settings.emailNotif")}
         </label>
-        <label className="row">
+        <label className="switch">
           <input
             type="checkbox"
             checked={user.settings.weeklyDigest}
             onChange={(e) => updateSettings.mutate({ weeklyDigest: e.target.checked })}
           />
-          Weekly digest
+          <span className="track" />
+          {t("settings.weeklyDigest")}
         </label>
       </section>
 
       <section className="card stack">
-        <h2>Pro plan</h2>
+        <h2>{t("settings.pro")}</h2>
         {billing.data?.plan === "pro" ? (
-          <p>You are on Pro 🎉</p>
+          <p className="banner notice">{t("settings.onPro")}</p>
         ) : stripePromise ? (
           <ProCheckout
             onPaid={() => void queryClient.invalidateQueries({ queryKey: orpc.billing.key() })}
           />
         ) : (
-          <p className="muted">
-            Set <code>VITE_STRIPE_PUBLISHABLE_KEY</code> (and the server's{" "}
-            <code>STRIPE_SECRET_KEY</code>) to enable checkout.
+          <p className="muted small">
+            {t("settings.stripeHintA")} <code>VITE_STRIPE_PUBLISHABLE_KEY</code>{" "}
+            {t("settings.stripeHintB")} <code>STRIPE_SECRET_KEY</code>
+            {t("settings.stripeHintC")}
           </p>
         )}
         {billing.data && billing.data.payments.length > 0 ? (
-          <ul className="muted small">
+          <ul className="payments">
             {billing.data.payments.map((p) => (
               <li key={p.id}>
-                {new Date(p.createdAt).toLocaleString()} · {(p.amount / 100).toFixed(2)}{" "}
-                {p.currency.toUpperCase()} · {p.status}
+                <span>{dateTime(p.createdAt, locale)}</span>
+                <span>
+                  {(p.amount / 100).toFixed(2)} {p.currency.toUpperCase()} · {p.status}
+                </span>
               </li>
             ))}
           </ul>
@@ -124,12 +156,15 @@ export function SettingsPage() {
  * ack. The API never sees the bytes; the worker's verdict arrives over SSE.
  */
 function AvatarUpload({
+  name,
   currentImage,
   onDone
 }: {
+  name: string;
   currentImage: string | null;
   onDone: () => void;
 }) {
+  const { t } = useI18n();
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileId, setFileId] = useState<string | null>(null);
@@ -141,7 +176,11 @@ function AvatarUpload({
     if (event.type === "file.progress" && event.fileId === fileId)
       setProgress(`${event.step} ${event.pct}%`);
     if (event.type === "file.done" && event.fileId === fileId) {
-      setProgress(event.status === "ready" ? "ready ✓" : `rejected: ${event.reason ?? ""}`);
+      setProgress(
+        event.status === "ready"
+          ? t("upload.ready")
+          : t("upload.rejected", { reason: event.reason ?? "" })
+      );
       onDone();
     }
   }, Boolean(fileId));
@@ -150,7 +189,7 @@ function AvatarUpload({
     const file = e.target.files?.[0];
     if (!file) return;
     setError(null);
-    setProgress("requesting upload URL…");
+    setProgress(t("upload.requesting"));
     try {
       const signed = await presign.mutateAsync({
         kind: "avatar",
@@ -158,34 +197,30 @@ function AvatarUpload({
         contentType: file.type as "image/jpeg" | "image/png" | "image/webp",
         size: file.size
       });
-      setProgress("uploading to storage…");
+      setProgress(t("upload.uploading"));
       const put = await fetch(signed.uploadUrl, {
         method: "PUT",
         headers: signed.headers,
         body: file
       });
-      if (!put.ok) throw new Error(`storage answered ${put.status}`);
+      if (!put.ok) throw new Error(t("upload.storageError", { status: put.status }));
       setFileId(signed.fileId);
-      setProgress("acknowledging…");
+      setProgress(t("upload.acking"));
       await ack.mutateAsync({ id: signed.fileId });
-      setProgress("queued for processing…");
+      setProgress(t("upload.queued"));
     } catch (err) {
-      setError(describeError(err));
+      setError(describeError(err, t));
       setProgress(null);
     }
   }
 
   return (
     <div className="row">
-      {currentImage ? (
-        <img className="avatar lg" src={currentImage} alt="" />
-      ) : (
-        <div className="avatar lg placeholder" />
-      )}
-      <label className="stack">
+      <Avatar name={name} image={currentImage} size="lg" />
+      <label className="stack tight">
         <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onChange} />
         {progress ? <span className="muted small">{progress}</span> : null}
-        {error ? <span className="error">{error}</span> : null}
+        {error ? <span className="error small">{error}</span> : null}
       </label>
     </div>
   );
@@ -193,14 +228,18 @@ function AvatarUpload({
 
 /** Stripe Payment Intent flow, client half (L12): confirm with the clientSecret; the webhook does fulfilment. */
 function ProCheckout({ onPaid }: { onPaid: () => void }) {
+  const { t } = useI18n();
   const checkout = useMutation(orpc.billing.checkout.mutationOptions());
   if (!checkout.data) {
     return (
-      <div className="stack">
-        <button type="button" onClick={() => checkout.mutate({})} disabled={checkout.isPending}>
-          Upgrade to Pro
-        </button>
-        {checkout.error ? <p className="error">{describeError(checkout.error)}</p> : null}
+      <div className="stack tight">
+        <p className="muted small">{t("settings.upgradeIntro")}</p>
+        <div className="row">
+          <button type="button" onClick={() => checkout.mutate({})} disabled={checkout.isPending}>
+            {t("settings.upgrade")}
+          </button>
+        </div>
+        {checkout.error ? <p className="banner error">{describeError(checkout.error, t)}</p> : null}
       </div>
     );
   }
@@ -220,6 +259,7 @@ function PayForm({
   currency: string;
   onPaid: () => void;
 }) {
+  const { t } = useI18n();
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -231,7 +271,7 @@ function PayForm({
     setState("paying");
     const result = await stripe.confirmPayment({ elements, redirect: "if_required" });
     if (result.error) {
-      setError(result.error.message ?? "Payment failed");
+      setError(result.error.message ?? t("pay.failed"));
       setState("idle");
       return;
     }
@@ -245,11 +285,11 @@ function PayForm({
       <PaymentElement />
       <button type="submit" disabled={!stripe || state !== "idle"}>
         {state === "done"
-          ? "Thanks — confirming with Stripe…"
-          : `Pay ${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`}
+          ? t("pay.confirming")
+          : t("pay.pay", { amount: (amount / 100).toFixed(2), currency: currency.toUpperCase() })}
       </button>
-      {error ? <p className="error">{error}</p> : null}
-      <p className="muted small">Test card: 4242 4242 4242 4242, any future date, any CVC.</p>
+      {error ? <p className="banner error">{error}</p> : null}
+      <p className="muted small">{t("pay.testCard")}</p>
     </form>
   );
 }

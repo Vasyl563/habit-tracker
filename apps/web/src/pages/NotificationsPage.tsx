@@ -1,9 +1,22 @@
+import type { NotificationType } from "@habit-tracker/types";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { orpc } from "../api/client.js";
 import { describeError } from "../api/errors.js";
+import { useI18n } from "../lib/i18n.js";
+import { dateTime } from "../lib/ui.js";
+
+const TYPE_ICONS: Record<NotificationType, string> = {
+  "follow.created": "👥",
+  "streak.milestone": "🔥",
+  "payment.succeeded": "🧾",
+  "payment.failed": "⚠️",
+  "file.ready": "🖼️",
+  "file.rejected": "🚫"
+};
 
 export function NotificationsPage() {
   const queryClient = useQueryClient();
+  const { locale, t } = useI18n();
   const list = useInfiniteQuery(
     orpc.notifications.list.infiniteOptions({
       input: (cursor: string | undefined) => ({ limit: 20, cursor, unreadOnly: false }),
@@ -22,35 +35,48 @@ export function NotificationsPage() {
 
   return (
     <div className="stack">
-      <div className="row space">
-        <h1>Inbox</h1>
-        <button type="button" className="secondary" onClick={() => markAll.mutate({})}>
-          Mark all read
+      <div className="page-head">
+        <div>
+          <h1>{t("inbox.title")}</h1>
+          <p className="sub">{t("inbox.sub")}</p>
+        </div>
+        <button type="button" className="secondary small" onClick={() => markAll.mutate({})}>
+          {t("inbox.markAll")}
         </button>
       </div>
-      {list.isError ? <p className="error">{describeError(list.error)}</p> : null}
-      {items.length === 0 && !list.isLoading ? <p className="muted">All quiet.</p> : null}
-      <ul className="stack">
+      {list.isError ? <p className="banner error">{describeError(list.error, t)}</p> : null}
+      {items.length === 0 && !list.isLoading ? (
+        <div className="empty">
+          <span className="icon">🧘</span>
+          {t("inbox.empty")}
+        </div>
+      ) : null}
+      <ul className="stack tight">
         {items.map((n) => (
-          <li key={n.id} className={`card row space ${n.readAt ? "read" : "unread"}`}>
-            <div>
+          <li key={n.id} className={`card notif ${n.readAt ? "read" : "unread"}`}>
+            <span className="notif-icon" aria-hidden>
+              {TYPE_ICONS[n.type] ?? "🔔"}
+            </span>
+            <div className="grow">
               <strong>{n.title}</strong>
               {n.body ? <div className="muted">{n.body}</div> : null}
-              <div className="muted small">
-                {n.type} · {new Date(n.createdAt).toLocaleString()}
-              </div>
+              <div className="muted small">{dateTime(n.createdAt, locale)}</div>
             </div>
             {!n.readAt ? (
-              <button type="button" className="link" onClick={() => markRead.mutate({ id: n.id })}>
-                mark read
+              <button
+                type="button"
+                className="link small"
+                onClick={() => markRead.mutate({ id: n.id })}
+              >
+                {t("inbox.markRead")}
               </button>
             ) : null}
           </li>
         ))}
       </ul>
       {list.hasNextPage ? (
-        <button type="button" onClick={() => list.fetchNextPage()}>
-          Load more
+        <button type="button" className="secondary" onClick={() => list.fetchNextPage()}>
+          {t("feed.loadMore")}
         </button>
       ) : null}
     </div>
